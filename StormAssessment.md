@@ -1,11 +1,6 @@
----
-title: "Effects of Severe Weather Events in the United states"
-author: 'Author: Eddy'
-date: 'Date: Wednesday, October 25, 2014'
-output:
-  html_document:
-    keep_md: yes
----
+# Effects of Severe Weather Events in the United states
+Author: Eddy  
+Date: Wednesday, October 25, 2014  
 
 ## Synopsis:
 The purpose of this report is to inform government or municipal managers responsible for preparing for severe weather events.  The report uses data provided by the U.S. National Oceanic and Atmospheric Administration's (NOAA) storm database to identify events of greatest damage and harm.  The final assessment of this report shows that the events that cause the most damage with respect to properties and crops differ from those that cause the most fatalities as well as injuries.  The goal of this report is to provide analysis on data that would allow officials to make informed decisions and preparations for certain infrastructure or services based on expected events.
@@ -21,7 +16,8 @@ To reproduce this research, please ensure to set the working directory where the
 
 Note: No code book was made available associated with this dataset.
 
-```{r cache=TRUE, echo=TRUE}
+
+```r
 ## set working directory
 setwd("~/Data Science/Assignments/RepData_PA2")
 
@@ -30,6 +26,24 @@ library(R.utils)
 library(ggplot2)
 library(dplyr)
 library(plyr)
+```
+
+```
+## -------------------------------------------------------------------------
+## You have loaded plyr after dplyr - this is likely to cause problems.
+## If you need functions from both plyr and dplyr, please load plyr first, then dplyr:
+## library(plyr); library(dplyr)
+## -------------------------------------------------------------------------
+## 
+## Attaching package: 'plyr'
+## 
+## The following objects are masked from 'package:dplyr':
+## 
+##     arrange, count, desc, failwith, id, mutate, rename, summarise,
+##     summarize
+```
+
+```r
 library(stats)
 ## download file
 fileUrl <- "https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2FStormData.csv.bz2"
@@ -49,9 +63,20 @@ The data analysis must address the following questions:
 
 ### Data Processing:
 I began by looking at the available columns data
-```{r}
-names(StormData)
 
+```r
+names(StormData)
+```
+
+```
+##  [1] "STATE__"    "BGN_DATE"   "BGN_TIME"   "TIME_ZONE"  "COUNTY"    
+##  [6] "COUNTYNAME" "STATE"      "EVTYPE"     "BGN_RANGE"  "BGN_AZI"   
+## [11] "BGN_LOCATI" "END_DATE"   "END_TIME"   "COUNTY_END" "COUNTYENDN"
+## [16] "END_RANGE"  "END_AZI"    "END_LOCATI" "LENGTH"     "WIDTH"     
+## [21] "F"          "MAG"        "FATALITIES" "INJURIES"   "PROPDMG"   
+## [26] "PROPDMGEXP" "CROPDMG"    "CROPDMGEXP" "WFO"        "STATEOFFIC"
+## [31] "ZONENAMES"  "LATITUDE"   "LONGITUDE"  "LATITUDE_E" "LONGITUDE_"
+## [36] "REMARKS"    "REFNUM"
 ```
 
 The main columns that were required for this analysis were location, event type, injuries, and fatalities, and economic data.
@@ -65,7 +90,8 @@ I narrowed the tables down to the following seven columns:
 27. CROPDMG
 28. CROPDMGEXP
 
-```{r cache=TRUE}
+
+```r
 StormData2 <- StormData[ ,c(8, 23:28)]
 ```
 
@@ -76,7 +102,8 @@ thousand: k = 1000
 million:  m = 1000000
 billion:  b = 1000000000
 
-```{r}
+
+```r
 ## apply lower case to all values
 StormData2$PROPDMGEXP <- tolower(StormData2$PROPDMGEXP)
 StormData2$CROPDMGEXP <- tolower(StormData2$CROPDMGEXP)
@@ -93,12 +120,26 @@ StormData2$PROPDMGEXP <- sapply(StormData2$PROPDMGEXP, mult)
 StormData2$CROPDMGEXP <- sapply(StormData2$CROPDMGEXP, mult)
 ```
 Now I multiply the **`PROPDMG`** with **`ROPDMGEXP`** and the **`CROPDMG`** with **`CROPDMGEXP`**.
-```{r cache=TRUE}
+
+```r
 StormData2$PROPDMG <- as.numeric(StormData2$PROPDMG)
 StormData2$PROPDMG <- StormData2$PROPDMG * as.numeric(StormData2$PROPDMGEXP)
+```
+
+```
+## Warning: NAs introduced by coercion
+```
+
+```r
 StormData2$CROPDMG <- as.numeric(StormData2$CROPDMG)
 StormData2$CROPDMG <- StormData2$PROPDMG * as.numeric(StormData2$CROPDMGEXP)
+```
 
+```
+## Warning: NAs introduced by coercion
+```
+
+```r
 ## convert NA values to 0
 write.csv(StormData2,"StormData2.csv",na="0")
 
@@ -110,8 +151,29 @@ Then I determined the event types in order to normalize the **`EVTYPE`** values.
 
 
 Next I aggregated by the event type to determine total injuries, fatalities, and damages to property and crops
-```{r}
+
+```r
 library(dplyr)
+```
+
+```
+## Warning: package 'dplyr' was built under R version 3.1.1
+```
+
+```
+## 
+## Attaching package: 'dplyr'
+## 
+## The following object is masked from 'package:stats':
+## 
+##     filter
+## 
+## The following objects are masked from 'package:base':
+## 
+##     intersect, setdiff, setequal, union
+```
+
+```r
 harm <- aggregate(cbind(FATALITIES, INJURIES) ~ EVTYPE, data=StormData3, sum)
 dmg <- aggregate(cbind(PROPDMG, CROPDMG) ~ EVTYPE, data=StormData3, sum)
 dmg <- mutate(dmg, DAMAGE = (PROPDMG  + CROPDMG)/1000000)
@@ -139,7 +201,8 @@ Looking at the top 30 events for damages, we can normalize the events to the top
 9  HEAVY SNOW, BLIZZARD   
    
 
-```{r}
+
+```r
 HURRI <- dmgsort[c(1, 4, 5, 14, 19), ]
 T1 <- sum(HURRI$DAMAGE)
 FLOOD <- dmgsort[c(2, 3, 6, 22, 25, 27), ] 
@@ -160,7 +223,8 @@ HSNOW <- dmgsort[c(21,24), ]
 T9 <- sum(HSNOW$DAMAGE)
 ```
 I will now make a data frame for the **`EVENT`** and the **`DAMAGE`**.
-```{r}
+
+```r
 EVENT <- c("HURRICANE", "FLOOD", "TORNADO", "FIRE", "ICE STORM", "TROPICAL STORM", "DROUGHT", "HEAVY RAIN", "HEAVY SNOW")
 DAMAGE <- c(T1, T2, T3, T4, T5, T6, T7, T8, T9)
 dmgdf <- data.frame(EVENT, DAMAGE)
@@ -177,7 +241,8 @@ Looking at the top 30 events for fatalities, we can normalize the events to the 
 7  AVALANCHE
 8  WINTER STORM
 9  EXTREME COLD   
-```{r}
+
+```r
 TORNA <- fatsort[1, ]
 F1 <- sum(TORNA$FATALITIES)
 HEAT <- fatsort[c(2, 4, 13, 22), ] 
@@ -198,7 +263,8 @@ EXTRE <- fatsort[c(14, 17, 22), ]
 F9 <- sum(EXTRE$FATALITIES)
 ```
 I will now make a data frame for the **`EVENT`** and the **`DAMAGE`**.
-```{r}
+
+```r
 EVENT <- c("TORNADO", "HEAT", "FLOOD", "LIGHTENING", "WIND", "RIP CURRENT", "AVALANCHE", "WINTER STORM", "EXTREME COLD")
 FATALITIES <- c(F1, F2, F3, F4, F5, F6, F7, F8, F9)
 fatdf <- data.frame(EVENT, FATALITIES)
@@ -216,7 +282,8 @@ Looking at the top 30 events for injuries, we can normalize the events to the to
 8  BLIZZARD
 9  HURRICANE
 
-```{r}
+
+```r
 TORNA <- injsort[1, ]
 I1 <- sum(TORNA$INJURIES)
 WIND <- injsort[c(2, 9, 13, 16, 25, 27), ] 
@@ -237,13 +304,15 @@ HURRI <- injsort[12, ]
 I9 <- sum(HURRI$INJURIES)
 ```
 I will now make a data frame for the **`EVENT`** and the **`INJURIES`**.
-```{r}
+
+```r
 EVENT <- c("TORNADO", "WIND", "FLOOD", "HEAT", "LIGHTENING", "ICE STORM", "HAIL", "BLIZZARD", "HURRICANE")
 INJURIES <- c(I1, I2, I3, I4, I5, I6, I7, I8, I9)
 injdf <- data.frame(EVENT, INJURIES)
 ```
 Now I resort the results for each of the data frames
-```{r}
+
+```r
 ## sort by DAMAGE cost decending
 dmgsort <- dmgdf[order(-dmgdf$DAMAGE),]
 ## sort by FATALITIES decending
@@ -252,14 +321,29 @@ fatsort <- fatdf[order(-fatdf$FATALITIES),]
 injsort <- injdf[order(-injdf$INJURIES),]
 ```
 Now I will create data frames to of the three figures
-```{r}
+
+```r
 damage <- data.frame(dmgsort)
 fatalities <- data.frame(fatsort)
 injuries <- data.frame(injsort)
 ```
 ## Results and Analysis:
-```{r}
+
+```r
 damage
+```
+
+```
+##            EVENT       DAMAGE
+## 1      HURRICANE 5.909545e+12
+## 2          FLOOD 5.120030e+12
+## 3        TORNADO 5.908311e+09
+## 4           FIRE 1.342822e+09
+## 5      ICE STORM 5.808015e+08
+## 6 TROPICAL STORM 2.524481e+08
+## 7        DROUGHT 2.005862e+08
+## 8     HEAVY RAIN 1.604681e+08
+## 9     HEAVY SNOW 1.486613e+08
 ```
 
 Table 1. Dollar value of damages to crops and properties by event
@@ -267,7 +351,8 @@ Table 1. Dollar value of damages to crops and properties by event
 Table 1 indicates that property and crop damage cost impacts are highest for hurricanes, floods, and tornados.  This is most likely due to the long-term impacts associated with rebuilding and the process required to re-establish agriculture for a given area.
 Note: A table was used here given the difference in range in cost by events.
 
-```{r}
+
+```r
 library(ggplot2)
 f <- ggplot(fatalities, aes(x=EVENT, y=FATALITIES))
 f <- f + geom_bar(stat="identity", position = "identity")
@@ -281,11 +366,14 @@ f <- f + theme(axis.text.x =
                             vjust = 1))
 f
 ```
+
+![](StormAssessment_files/figure-html/unnamed-chunk-16-1.png) 
 Figure 1. Fatalities by event
 
 Figure 1 indicates that fatalities are caused most by tornados.  Second and third events causing fatalities are heat and wind associated events.  
 
-```{r}
+
+```r
 i <- ggplot(injuries, aes(x=EVENT, y=INJURIES))
 i <- i + geom_bar(stat="identity", position = "identity")
 i <- i + labs(x="EVENT",
@@ -298,6 +386,8 @@ i <- i + theme(axis.text.x =
                             vjust = 1))
 i
 ```
+
+![](StormAssessment_files/figure-html/unnamed-chunk-17-1.png) 
 
 Figure 2. Injuries by event
 
